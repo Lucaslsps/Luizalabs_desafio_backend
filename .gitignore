@@ -1,0 +1,7 @@
+/node_modules
+/photos/*
+!photos/.gitkeep 
+/src/database/database.sqlite
+/server-linux
+/server-macos
+/server-win.exe
