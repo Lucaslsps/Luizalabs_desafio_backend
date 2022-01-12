@@ -2,10 +2,26 @@
   "name": "luizalabs_desafio_backend",
   "version": "1.0.0",
   "description": "## Task 1 - Construa um parser para o arquivo de log games.log e exponha uma API de consulta.",
-  "main": "server.js",
+  "main": "src/shared/infra/http/server.ts",
   "scripts": {
+    "dev:server": "ts-node-dev -r tsconfig-paths/register --inspect --transpile-only --ignore-watch node_modules src/shared/infra/http/server.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Lucas Peixoto",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "express": "4.17.2",
+    "celebrate": "12.1.1",
+    "cors": "2.8.5",
+    "dotenv": "8.2.0",
+    "reflect-metadata": "0.1.13",
+    "tsyringe": "4.2.0"
+  },
+  "devDependencies": {
+    "ts-node-dev": "1.1.8",
+    "jest": "26.0.1",
+    "ts-jest": "25.2.1",
+    "typescript": "3.8.3",
+    "tsconfig-paths": "3.9.0"
+  }
 }
