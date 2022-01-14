@@ -14,21 +14,35 @@ interface IKill {
   [player: string]: number;
 }
 
-async function ReadLogFileService(): Promise<any> {
-  const games = [] as IGameStorage[];
-  let gameCounter = 0;
+function ReadLogFileService(): Promise<any> {
+  const readStream = new Promise((resolve, reject) => {
+    const games = [] as IGameStorage[];
+    let gameCounter = 0;
+    return fs
+      .createReadStream('src/logs/games.log')
+      .pipe(eventStream.split())
+      .on('data', (line) => {
+        const lineSplitByBlankSpace = line
+          .split(' ')
+          .filter((splitLine) => splitLine !== '');
 
-  fs.createReadStream('src/logs/games.log')
-    .pipe(eventStream.split())
-    .pipe(
-      eventStream.mapSync((line: string) => {
-        const lineSplitByBlankSpace = line.split(' ');
-        const currentLineAction = lineSplitByBlankSpace[3];
+        const currentLineAction = lineSplitByBlankSpace[1];
 
         if (currentLineAction === 'InitGame:') {
           gameCounter++;
           const newGameName = `game_${gameCounter}`;
           games[newGameName] = { total_kills: 0, players: [], kills: {} };
+          //console.log(line);
+        }
+
+        if (currentLineAction === 'ClientUserinfoChanged:') {
+          const currentGame: IGame = games[`game_${gameCounter}`];
+          const currentGamePlayers = currentGame.players;
+          const playerLoggedIn = line.split('n\\')[1].split('\\')[0];
+
+          currentGamePlayers.find((player) => player === playerLoggedIn)
+            ? ''
+            : currentGamePlayers.push(playerLoggedIn);
         }
 
         if (currentLineAction === 'Kill:') {
@@ -36,22 +50,29 @@ async function ReadLogFileService(): Promise<any> {
           const currentGamePlayers = currentGame.players;
           const playerKiller = lineSplitByBlankSpace[7];
           const playerKilled = lineSplitByBlankSpace[9];
+          const isWorldTheKiller = playerKiller === '<world>' ? true : false;
 
           currentGame.total_kills++;
 
-          currentGamePlayers.find((player) => player === playerKiller)
-            ? ''
-            : currentGamePlayers.push(playerKiller);
+          if (!isWorldTheKiller) {
+            currentGamePlayers.find((player) => player === playerKiller)
+              ? ''
+              : currentGamePlayers.push(playerKiller);
 
-          currentGamePlayers.find((player) => player === playerKilled)
-            ? ''
-            : currentGamePlayers.push(playerKilled);
-
-          currentGame.kills[playerKiller] =
-            currentGame.kills[playerKiller] + 1 || 1;
+            currentGame.kills[playerKiller] =
+              currentGame.kills[playerKiller] + 1 || 1;
+          } else {
+            currentGame.kills[playerKilled] =
+              currentGame.kills[playerKilled] - 1 || -1;
+          }
         }
       })
-    );
+      .on('end', () => {
+        console.log(games);
+        resolve(games);
+      });
+  });
+  return readStream;
 }
 
 export default ReadLogFileService;

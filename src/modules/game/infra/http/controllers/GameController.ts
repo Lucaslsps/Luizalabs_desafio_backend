@@ -2,8 +2,8 @@ import { Request, Response } from 'express';
 import ReadLogFileService from '../../../services/ReadLogFileService';
 export default class GameController {
   public async read(request: Request, response: Response): Promise<Response> {
-    await ReadLogFileService();
+    const games = await ReadLogFileService();
 
-    return response.json();
+    return response.json(games);
   }
 }
