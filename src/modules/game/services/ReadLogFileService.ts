@@ -14,17 +14,23 @@ interface IKill {
   [player: string]: number;
 }
 
-async function ReadLogFileService(): Promise<any> {
+interface IParams {
+  fileDirec?: string;
+}
+
+async function ReadLogFileService({
+  fileDirec = 'src/logs/games.log',
+}: IParams = {}): Promise<any> {
   const readStream = new Promise<any>((resolve, reject) => {
     const games = [] as IGameStorage[];
     let gameCounter = 0;
     return fs
-      .createReadStream('src/logs/games.log')
+      .createReadStream(fileDirec)
       .pipe(eventStream.split())
       .on('data', (line) => {
         const lineSplitByBlankSpaceFiltered = line
           .split(' ')
-          .filter((splitLine) => splitLine !== '');
+          .filter((splitLine: string) => splitLine !== '');
 
         const currentLineAction = lineSplitByBlankSpaceFiltered[1];
 
