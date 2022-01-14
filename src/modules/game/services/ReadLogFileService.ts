@@ -22,17 +22,16 @@ async function ReadLogFileService(): Promise<any> {
       .createReadStream('src/logs/games.log')
       .pipe(eventStream.split())
       .on('data', (line) => {
-        const lineSplitByBlankSpace = line
+        const lineSplitByBlankSpaceFiltered = line
           .split(' ')
           .filter((splitLine) => splitLine !== '');
 
-        const currentLineAction = lineSplitByBlankSpace[1];
+        const currentLineAction = lineSplitByBlankSpaceFiltered[1];
 
         if (currentLineAction === 'InitGame:') {
           gameCounter++;
           const newGameName = `game_${gameCounter}`;
           games[newGameName] = { total_kills: 0, players: [], kills: {} };
-          //console.log(line);
         }
 
         if (currentLineAction === 'ClientUserinfoChanged:') {
@@ -47,29 +46,35 @@ async function ReadLogFileService(): Promise<any> {
 
         if (currentLineAction === 'Kill:') {
           const currentGame: IGame = games[`game_${gameCounter}`];
-          const currentGamePlayers = currentGame.players;
-          const playerKiller = lineSplitByBlankSpace[7];
-          const playerKilled = lineSplitByBlankSpace[9];
+          const playerKiller = line.split(': ')[2].split(' killed ')[0];
+          const playerKilled = line
+            .split(': ')[2]
+            .split(' killed ')[1]
+            .split(' by ')[0];
+
           const isWorldTheKiller = playerKiller === '<world>' ? true : false;
 
-          currentGame.total_kills++;
-
-          if (!isWorldTheKiller) {
-            currentGamePlayers.find((player) => player === playerKiller)
-              ? ''
-              : currentGamePlayers.push(playerKiller);
-
-            currentGame.kills[playerKiller] =
-              currentGame.kills[playerKiller] + 1 || 1;
-          } else {
-            currentGame.kills[playerKilled] =
-              currentGame.kills[playerKilled] - 1 || -1;
+          if (playerKiller !== playerKilled) {
+            currentGame.total_kills++;
+            if (isWorldTheKiller) {
+              let playerKilledKills = currentGame.kills[playerKilled];
+              if (playerKilledKills === undefined) {
+                currentGame.kills[playerKilled] = 0;
+              } else if (playerKilledKills === 0) {
+              } else {
+                currentGame.kills[playerKilled] = playerKilledKills - 1;
+              }
+            } else {
+              currentGame.kills[playerKiller] =
+                currentGame.kills[playerKiller] + 1 || 1;
+            }
           }
         }
       })
       .on('end', () => {
         const gamesToJson = {};
         Object.keys(games).forEach((game) => (gamesToJson[game] = games[game]));
+
         resolve(gamesToJson);
       });
   });
