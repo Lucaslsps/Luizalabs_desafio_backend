@@ -14,8 +14,8 @@ interface IKill {
   [player: string]: number;
 }
 
-function ReadLogFileService(): Promise<any> {
-  const readStream = new Promise((resolve, reject) => {
+async function ReadLogFileService(): Promise<any> {
+  const readStream = new Promise<any>((resolve, reject) => {
     const games = [] as IGameStorage[];
     let gameCounter = 0;
     return fs
@@ -68,10 +68,12 @@ function ReadLogFileService(): Promise<any> {
         }
       })
       .on('end', () => {
-        console.log(games);
-        resolve(games);
+        const gamesToJson = {};
+        Object.keys(games).forEach((game) => (gamesToJson[game] = games[game]));
+        resolve(gamesToJson);
       });
   });
+
   return readStream;
 }
 
