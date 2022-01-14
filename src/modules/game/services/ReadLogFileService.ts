@@ -21,9 +21,15 @@ interface IParams {
 async function ReadLogFileService({
   fileDirec = 'src/logs/games.log',
 }: IParams = {}): Promise<any> {
+  /*
+    Creating a promise encapsuling the reading stream
+    so that it can be returned and awaited
+  */
+
   const readStream = new Promise<any>((resolve, reject) => {
     const games = [] as IGameStorage[];
     let gameCounter = 0;
+
     return fs
       .createReadStream(fileDirec)
       .pipe(eventStream.split())
@@ -63,6 +69,11 @@ async function ReadLogFileService({
           if (playerKiller !== playerKilled) {
             currentGame.total_kills++;
             if (isWorldTheKiller) {
+              /*
+               This part makes it not possible
+               to have negative kills when
+               the world kills the player
+              */
               let playerKilledKills = currentGame.kills[playerKilled];
               if (playerKilledKills === undefined) {
                 currentGame.kills[playerKilled] = 0;
