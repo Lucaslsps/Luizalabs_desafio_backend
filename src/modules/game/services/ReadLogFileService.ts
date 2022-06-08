@@ -1,5 +1,7 @@
 import fs from 'fs';
+import { injectable, inject } from 'tsyringe';
 import eventStream from 'event-stream';
+import AppError from '@shared/errors/AppError';
 
 interface IGameStorage {
   [game: string]: IGame;
@@ -18,85 +20,90 @@ interface IParams {
   fileDirec?: string;
 }
 
-async function ReadLogFileService({
-  fileDirec = 'src/logs/games.log',
-}: IParams = {}): Promise<any> {
-  /*
+@injectable()
+class ReadLogFileService {
+  async execute({
+    fileDirec = 'src/logs/games.log',
+  }: IParams = {}): Promise<any> {
+    /*
     Creating a promise encapsuling the reading stream
     so that it can be returned and awaited
   */
 
-  const readStream = new Promise<any>((resolve, reject) => {
-    const games = [] as IGameStorage[];
-    let gameCounter = 0;
+    const readStream = new Promise<any>((resolve, reject) => {
+      const games = [] as IGameStorage[];
+      let gameCounter = 0;
 
-    return fs
-      .createReadStream(fileDirec)
-      .pipe(eventStream.split())
-      .on('data', (line) => {
-        const lineSplitByBlankSpaceFiltered = line
-          .split(' ')
-          .filter((splitLine: string) => splitLine !== '');
+      return fs
+        .createReadStream(fileDirec)
+        .pipe(eventStream.split())
+        .on('data', (line) => {
+          const lineSplitByBlankSpaceFiltered = line
+            .split(' ')
+            .filter((splitLine: string) => splitLine !== '');
 
-        const currentLineAction = lineSplitByBlankSpaceFiltered[1];
+          const currentLineAction = lineSplitByBlankSpaceFiltered[1];
 
-        if (currentLineAction === 'InitGame:') {
-          gameCounter++;
-          const newGameName = `game_${gameCounter}`;
-          games[newGameName] = { total_kills: 0, players: [], kills: {} };
-        }
+          if (currentLineAction === 'InitGame:') {
+            gameCounter++;
+            const newGameName = `game_${gameCounter}`;
+            games[newGameName] = { total_kills: 0, players: [], kills: {} };
+          }
 
-        if (currentLineAction === 'ClientUserinfoChanged:') {
-          const currentGame: IGame = games[`game_${gameCounter}`];
-          const currentGamePlayers = currentGame.players;
-          const playerLoggedIn = line.split('n\\')[1].split('\\')[0];
+          if (currentLineAction === 'ClientUserinfoChanged:') {
+            const currentGame: IGame = games[`game_${gameCounter}`];
+            const currentGamePlayers = currentGame.players;
+            const playerLoggedIn = line.split('n\\')[1].split('\\')[0];
 
-          currentGamePlayers.find((player) => player === playerLoggedIn)
-            ? ''
-            : currentGamePlayers.push(playerLoggedIn);
-        }
+            currentGamePlayers.find((player) => player === playerLoggedIn)
+              ? ''
+              : currentGamePlayers.push(playerLoggedIn);
+          }
 
-        if (currentLineAction === 'Kill:') {
-          const currentGame: IGame = games[`game_${gameCounter}`];
-          const playerKiller = line.split(': ')[2].split(' killed ')[0];
-          const playerKilled = line
-            .split(': ')[2]
-            .split(' killed ')[1]
-            .split(' by ')[0];
+          if (currentLineAction === 'Kill:') {
+            const currentGame: IGame = games[`game_${gameCounter}`];
+            const playerKiller = line.split(': ')[2].split(' killed ')[0];
+            const playerKilled = line
+              .split(': ')[2]
+              .split(' killed ')[1]
+              .split(' by ')[0];
 
-          const isWorldTheKiller = playerKiller === '<world>' ? true : false;
+            const isWorldTheKiller = playerKiller === '<world>' ? true : false;
 
-          if (playerKiller !== playerKilled) {
-            currentGame.total_kills++;
-            if (isWorldTheKiller) {
-              /*
+            if (playerKiller !== playerKilled) {
+              currentGame.total_kills++;
+              if (isWorldTheKiller) {
+                /*
                This part makes it not possible
                to have negative kills when
                the world kills the player
               */
-              let playerKilledKills = currentGame.kills[playerKilled];
-              if (playerKilledKills === undefined) {
-                currentGame.kills[playerKilled] = 0;
-              } else if (playerKilledKills === 0) {
+                let playerKilledKills = currentGame.kills[playerKilled];
+                if (playerKilledKills === undefined) {
+                  currentGame.kills[playerKilled] = 0;
+                } else if (playerKilledKills === 0) {
+                } else {
+                  currentGame.kills[playerKilled] = playerKilledKills - 1;
+                }
               } else {
-                currentGame.kills[playerKilled] = playerKilledKills - 1;
+                currentGame.kills[playerKiller] =
+                  currentGame.kills[playerKiller] + 1 || 1;
               }
-            } else {
-              currentGame.kills[playerKiller] =
-                currentGame.kills[playerKiller] + 1 || 1;
             }
           }
-        }
-      })
-      .on('end', () => {
-        const gamesToJson = {};
-        Object.keys(games).forEach((game) => (gamesToJson[game] = games[game]));
+        })
+        .on('end', () => {
+          const gamesToJson = {};
+          Object.keys(games).forEach(
+            (game) => (gamesToJson[game] = games[game])
+          );
 
-        resolve(gamesToJson);
-      });
-  });
+          resolve(gamesToJson);
+        });
+    });
 
-  return readStream;
+    return readStream;
+  }
 }
 
 export default ReadLogFileService;

@@ -1,9 +1,11 @@
 import { Request, Response } from 'express';
-import ReadLogFileService from '../../../services/ReadLogFileService';
+import { container } from 'tsyringe';
+import ReadLogFileService from '@modules/game/services/ReadLogFileService';
 
 export default class GameController {
   public async read(request: Request, response: Response): Promise<Response> {
-    const games = await ReadLogFileService();
+    const readLogFileService = container.resolve(ReadLogFileService);
+    const games = await readLogFileService.execute();
 
     return response.json(games);
   }
