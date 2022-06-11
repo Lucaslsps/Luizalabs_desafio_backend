@@ -2,19 +2,8 @@ import fs from 'fs';
 import { injectable, inject } from 'tsyringe';
 import eventStream from 'event-stream';
 import AppError from '@shared/errors/AppError';
-
-interface IGameStorage {
-  [game: string]: IGame;
-}
-interface IGame {
-  total_kills: number;
-  players: string[];
-  kills: IKill;
-}
-
-interface IKill {
-  [player: string]: number;
-}
+import IGameUtilsProvider from '@shared/container/providers/GameUtils/models/IGameUtilsProvider';
+import IGameStorage from '@shared/container/providers/GameUtils/interfaces/IGameStorage';
 
 interface IParams {
   fileDirec?: string;
@@ -22,6 +11,10 @@ interface IParams {
 
 @injectable()
 class ReadLogFileService {
+  constructor(
+    @inject('GameUtilsProvider')
+    private gameUtilsProvider: IGameUtilsProvider
+  ) {}
   async execute({
     fileDirec = 'src/logs/games.log',
   }: IParams = {}): Promise<any> {
@@ -31,72 +24,40 @@ class ReadLogFileService {
   */
 
     const readStream = new Promise<any>((resolve, reject) => {
-      const games = [] as IGameStorage[];
+      const gameStorage = [] as IGameStorage[];
       let gameCounter = 0;
 
       return fs
         .createReadStream(fileDirec)
         .pipe(eventStream.split())
-        .on('data', (line) => {
-          const lineSplitByBlankSpaceFiltered = line
-            .split(' ')
-            .filter((splitLine: string) => splitLine !== '');
-
-          const currentLineAction = lineSplitByBlankSpaceFiltered[1];
+        .on('data', (currentLine) => {
+          const currentLineAction =
+            this.gameUtilsProvider.getLineAction(currentLine);
 
           if (currentLineAction === 'InitGame:') {
             gameCounter++;
-            const newGameName = `game_${gameCounter}`;
-            games[newGameName] = { total_kills: 0, players: [], kills: {} };
+            this.gameUtilsProvider.createNewGame({ gameCounter, gameStorage });
           }
 
           if (currentLineAction === 'ClientUserinfoChanged:') {
-            const currentGame: IGame = games[`game_${gameCounter}`];
-            const currentGamePlayers = currentGame.players;
-            const playerLoggedIn = line.split('n\\')[1].split('\\')[0];
-
-            currentGamePlayers.find((player) => player === playerLoggedIn)
-              ? ''
-              : currentGamePlayers.push(playerLoggedIn);
+            this.gameUtilsProvider.setNewPlayerLoggedIn({
+              currentLine,
+              gameCounter,
+              gameStorage,
+            });
           }
 
           if (currentLineAction === 'Kill:') {
-            const currentGame: IGame = games[`game_${gameCounter}`];
-            const playerKiller = line.split(': ')[2].split(' killed ')[0];
-            const playerKilled = line
-              .split(': ')[2]
-              .split(' killed ')[1]
-              .split(' by ')[0];
-
-            const isWorldTheKiller = playerKiller === '<world>' ? true : false;
-
-            if (playerKiller !== playerKilled) {
-              currentGame.total_kills++;
-              if (isWorldTheKiller) {
-                /*
-               This part makes it not possible
-               to have negative kills when
-               the world kills the player
-              */
-                let playerKilledKills = currentGame.kills[playerKilled];
-                if (playerKilledKills === undefined) {
-                  currentGame.kills[playerKilled] = 0;
-                } else if (playerKilledKills === 0) {
-                } else {
-                  currentGame.kills[playerKilled] = playerKilledKills - 1;
-                }
-              } else {
-                currentGame.kills[playerKiller] =
-                  currentGame.kills[playerKiller] + 1 || 1;
-              }
-            }
+            this.gameUtilsProvider.handleKills({
+              currentLine,
+              gameCounter,
+              gameStorage,
+            });
           }
         })
         .on('end', () => {
-          const gamesToJson = {};
-          Object.keys(games).forEach(
-            (game) => (gamesToJson[game] = games[game])
-          );
+          const gamesToJson =
+            this.gameUtilsProvider.parseGameStorageToJson(gameStorage);
 
           resolve(gamesToJson);
         });
