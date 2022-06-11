@@ -1,3 +1,5 @@
+import log4js from 'log4js';
+
 import ICreateNewGame from '../interfaces/ICreateNewGame';
 import INewPlayerLoggedIn from '../interfaces/INewPlayerLoggedIn';
 import IHandleKills from '../interfaces/IHandleKills';
@@ -5,6 +7,15 @@ import IGameUtilsProvider from '../models/IGameUtilsProvider';
 import IGameStorage from '../interfaces/IGameStorage';
 
 class GameUtilsProvider implements IGameUtilsProvider {
+  private logger = log4js.getLogger('game');
+
+  constructor() {
+    log4js.configure({
+      appenders: { game: { type: 'file', filename: 'game.log' } },
+      categories: { default: { appenders: ['game'], level: 'trace' } },
+    });
+  }
+
   public getLineAction(currentLine: string): string {
     const lineSplitByBlankSpaceFiltered = currentLine
       .split(' ')
@@ -77,8 +88,8 @@ class GameUtilsProvider implements IGameUtilsProvider {
     }
   }
 
-  public parseGameStorageToJson(gameStorage: Map<string, IGame>) {
-    const gamesToJson: { [game: string]: IGame } = {};
+  public parseGameStorageToJson(gameStorage: Map<string, IGame>): IGameStorage {
+    const gamesToJson: IGameStorage = {};
     for (let key of gameStorage.keys()) {
       let game = gameStorage.get(key);
       if (game) {

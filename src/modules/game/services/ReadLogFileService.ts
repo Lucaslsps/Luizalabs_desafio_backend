@@ -1,4 +1,5 @@
 import fs from 'fs';
+import log4js from 'log4js';
 import { injectable, inject } from 'tsyringe';
 import eventStream from 'event-stream';
 import AppError from '@shared/errors/AppError';
@@ -11,19 +12,25 @@ interface IParams {
 
 @injectable()
 class ReadLogFileService {
+  private logger = log4js.getLogger('game');
   constructor(
     @inject('GameUtilsProvider')
     private gameUtilsProvider: IGameUtilsProvider
-  ) {}
+  ) {
+    log4js.configure({
+      appenders: { game: { type: 'file', filename: 'game.log' } },
+      categories: { default: { appenders: ['game'], level: 'trace' } },
+    });
+  }
   async execute({
     fileDirec = 'src/logs/games.log',
-  }: IParams = {}): Promise<any> {
+  }: IParams = {}): Promise<IGameStorage> {
     /*
     Creating a promise encapsuling the reading stream
     so that it can be returned and awaited
   */
 
-    const readStream = new Promise<any>((resolve, reject) => {
+    const readStream = await new Promise<IGameStorage>((resolve, reject) => {
       let gameStorage = new Map<string, IGame>();
       let gameCounter = 0;
 
@@ -63,6 +70,7 @@ class ReadLogFileService {
         });
     });
 
+    this.logger.info(`Game processed`);
     return readStream;
   }
 }

@@ -8,5 +8,5 @@ export default interface IGameUtilsProvider {
   createNewGame(params: ICreateNewGame): void;
   setNewPlayerLoggedIn(params: INewPlayerLoggedIn): void;
   handleKills(params: IHandleKills): void;
-  parseGameStorageToJson(gameStorage: Map<string, IGame>): any;
+  parseGameStorageToJson(gameStorage: Map<string, IGame>): IGameStorage;
 }
