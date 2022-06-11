@@ -1,0 +1,99 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Luizalabs desafio backend",
+    "description": "API feita de acordo com os parâmetros do desafio de backend da Luizalabs",
+    "termsOfService": "http://localhost:3333/v1/health",
+    "contact": {
+      "email": "lucas.lsps@hotmail.com"
+    },
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3333/v1/",
+      "description": "API Local"
+    }
+  ],
+  "paths": {
+    "/game": {
+      "get": {
+        "summary": "Relatório de jogos",
+        "description": "Essa rota retorna um relatório com o sumário de todos os jogos",
+        "tags": [
+          "Games"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application:json": {
+                "schema": {
+                  "type": "object",
+                  "$ref": "#components/schemas/Game"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "Health Check",
+        "description": "Essa joga realiza a checagem de saúde da aplicação",
+        "tags": [
+          "Health"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application;json": {
+                "schema": {
+                  "type": "object",
+                  "$ref": "#components/schemas/Health"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Game": {
+        "type": "object",
+        "properties": {
+          "total_kills": {
+            "type": "string"
+          },
+          "players": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "kills": {
+            "type": "object"
+          }
+        }
+      },
+      "Health": {
+        "type": "object",
+        "properties": {
+          "uptime": {
+            "type": "number"
+          },
+          "message": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}
