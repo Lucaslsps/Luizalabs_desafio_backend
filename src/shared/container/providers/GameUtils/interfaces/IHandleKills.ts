@@ -1,7 +1,7 @@
 import IGameStorage from './IGameStorage';
 
 export default interface IHandleKills {
-  gameStorage: IGameStorage[];
+  gameStorage: Map<string, IGame>;
   currentLine: string;
   gameCounter: number;
 }

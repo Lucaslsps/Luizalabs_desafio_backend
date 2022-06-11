@@ -24,7 +24,7 @@ class ReadLogFileService {
   */
 
     const readStream = new Promise<any>((resolve, reject) => {
-      const gameStorage = [] as IGameStorage[];
+      let gameStorage = new Map<string, IGame>();
       let gameCounter = 0;
 
       return fs

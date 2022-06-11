@@ -19,22 +19,26 @@ class GameUtilsProvider implements IGameUtilsProvider {
     gameStorage,
     gameCounter,
   }: INewPlayerLoggedIn): void {
-    const currentGame: IGame = gameStorage[`game_${gameCounter}`];
+    const currentGame: IGame | undefined = gameStorage.get(
+      `game_${gameCounter}`
+    );
+    if (!currentGame) return;
     const currentGamePlayers = currentGame.players;
     const playerLoggedIn = currentLine.split('n\\')[1].split('\\')[0];
 
-    currentGamePlayers.find((player) => player === playerLoggedIn)
-      ? ''
-      : currentGamePlayers.push(playerLoggedIn);
+    if (!currentGamePlayers.find((player) => player === playerLoggedIn)) {
+      currentGamePlayers.push(playerLoggedIn);
+      currentGame.kills[playerLoggedIn] = 0;
+    }
   }
 
   public createNewGame({ gameCounter, gameStorage }: ICreateNewGame): void {
     const newGameName = `game_${gameCounter}`;
-    gameStorage[newGameName] = {
+    gameStorage.set(newGameName, {
       total_kills: 0,
       players: [],
       kills: {},
-    };
+    });
   }
 
   public handleKills({
@@ -42,7 +46,10 @@ class GameUtilsProvider implements IGameUtilsProvider {
     currentLine,
     gameCounter,
   }: IHandleKills): void {
-    const currentGame: IGame = gameStorage[`game_${gameCounter}`];
+    const currentGame: IGame | undefined = gameStorage.get(
+      `game_${gameCounter}`
+    );
+    if (!currentGame) return;
     const playerKiller = currentLine.split(': ')[2].split(' killed ')[0];
     const playerKilled = currentLine
       .split(': ')[2]
@@ -55,15 +62,12 @@ class GameUtilsProvider implements IGameUtilsProvider {
       currentGame.total_kills++;
       if (isWorldTheKiller) {
         /*
-       This part makes it not possible
-       to have negative kills when
-       the world kills the player
-      */
+          This part makes it not possible
+          to have negative kills when
+          the world kills the player
+        */
         let playerKilledKills = currentGame.kills[playerKilled];
-        if (playerKilledKills === undefined) {
-          currentGame.kills[playerKilled] = 0;
-        } else if (playerKilledKills === 0) {
-        } else {
+        if (playerKilledKills > 0) {
           currentGame.kills[playerKilled] = playerKilledKills - 1;
         }
       } else {
@@ -72,11 +76,15 @@ class GameUtilsProvider implements IGameUtilsProvider {
       }
     }
   }
-  public parseGameStorageToJson(gameStorage: IGameStorage[]) {
-    const gamesToJson = {};
-    Object.keys(gameStorage).forEach(
-      (game) => (gamesToJson[game] = gameStorage[game])
-    );
+
+  public parseGameStorageToJson(gameStorage: Map<string, IGame>) {
+    const gamesToJson: { [game: string]: IGame } = {};
+    for (let key of gameStorage.keys()) {
+      let game = gameStorage.get(key);
+      if (game) {
+        gamesToJson[key] = game;
+      }
+    }
 
     return gamesToJson;
   }

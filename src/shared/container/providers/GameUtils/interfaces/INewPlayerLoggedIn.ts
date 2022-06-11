@@ -2,6 +2,6 @@ import IGameStorage from './IGameStorage';
 
 export default interface INewPlayerLoggedIn {
   currentLine: string;
-  gameStorage: IGameStorage[];
+  gameStorage: Map<string, IGame>;
   gameCounter: number;
 }
