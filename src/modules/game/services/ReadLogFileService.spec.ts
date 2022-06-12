@@ -1,8 +1,18 @@
+import 'reflect-metadata';
 import ReadLogFileService from './ReadLogFileService';
+import GameUtilsProvider from '../../../shared/container/providers/GameUtils/implementation/GameUtilsProvider';
+
+let readLogFileService: ReadLogFileService;
+let gameUtilsProvider: GameUtilsProvider;
 
 describe('ReadLogFile', () => {
+  beforeEach(() => {
+    gameUtilsProvider = new GameUtilsProvider();
+    readLogFileService = new ReadLogFileService(gameUtilsProvider);
+  });
+
   it('Testing empty game', async () => {
-    const games = await ReadLogFileService({
+    const games = await readLogFileService.execute({
       fileDirec: 'src/logs/fakes/games_fake1.log',
     });
 
@@ -16,7 +26,7 @@ describe('ReadLogFile', () => {
   });
 
   it('Testing normal game', async () => {
-    const games = await ReadLogFileService({
+    const games = await readLogFileService.execute({
       fileDirec: 'src/logs/fakes/games_fake2.log',
     });
 
@@ -32,7 +42,7 @@ describe('ReadLogFile', () => {
   });
 
   it('Testing two games', async () => {
-    const games = await ReadLogFileService({
+    const games = await readLogFileService.execute({
       fileDirec: 'src/logs/fakes/games_fake3.log',
     });
 

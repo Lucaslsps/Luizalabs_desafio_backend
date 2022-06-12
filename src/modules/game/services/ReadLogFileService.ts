@@ -1,8 +1,8 @@
 import fs from 'fs';
-import logger from '@shared/logging/Log4J';
+import log4js from 'log4js';
+import loggingOptions from '../../../config/logging';
 import { injectable, inject } from 'tsyringe';
 import eventStream from 'event-stream';
-import AppError from '@shared/errors/AppError';
 import IGameUtilsProvider from '@shared/container/providers/GameUtils/models/IGameUtilsProvider';
 import IGameStorage from '@shared/container/providers/GameUtils/interfaces/IGameStorage';
 
@@ -12,10 +12,13 @@ interface IParams {
 
 @injectable()
 class ReadLogFileService {
+  private logger = log4js.getLogger('game');
   constructor(
     @inject('GameUtilsProvider')
     private gameUtilsProvider: IGameUtilsProvider
-  ) {}
+  ) {
+    log4js.configure(loggingOptions);
+  }
   async execute({
     fileDirec = 'src/logs/games.log',
   }: IParams = {}): Promise<IGameStorage> {
@@ -64,7 +67,7 @@ class ReadLogFileService {
         });
     });
 
-    logger.info(`Game processed`);
+    this.logger.info(`Game processed`);
     return readStream;
   }
 }
