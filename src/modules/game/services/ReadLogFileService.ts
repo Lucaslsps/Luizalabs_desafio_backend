@@ -20,7 +20,7 @@ class ReadLogFileService {
     log4js.configure(loggingOptions);
   }
   async execute({
-    fileDirec = 'src/logs/games.log',
+    fileDirec = 'src/modules/game/data/games.log',
   }: IParams = {}): Promise<IGameStorage> {
     /*
     Creating a promise encapsuling the reading stream

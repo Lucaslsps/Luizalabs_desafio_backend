@@ -13,7 +13,7 @@ describe('ReadLogFile', () => {
 
   it('Testing empty game', async () => {
     const games = await readLogFileService.execute({
-      fileDirec: 'src/logs/fakes/games_fake1.log',
+      fileDirec: 'src/modules/game/data/fakes/games_fake1.log',
     });
 
     expect(games).toMatchObject({
@@ -27,7 +27,7 @@ describe('ReadLogFile', () => {
 
   it('Testing normal game', async () => {
     const games = await readLogFileService.execute({
-      fileDirec: 'src/logs/fakes/games_fake2.log',
+      fileDirec: 'src/modules/game/data/fakes/games_fake2.log',
     });
 
     expect(games).toMatchObject({
@@ -43,7 +43,7 @@ describe('ReadLogFile', () => {
 
   it('Testing two games', async () => {
     const games = await readLogFileService.execute({
-      fileDirec: 'src/logs/fakes/games_fake3.log',
+      fileDirec: 'src/modules/game/data/fakes/games_fake3.log',
     });
 
     expect(games).toMatchObject({
