@@ -13,3 +13,7 @@ Para subir a aplicação siga os passos:
 ## Testes
 
 Para rodar os testes unitários basta utilizar o comando "npm run test" ou "yarn test"
+
+## Documentação
+
+A documentação feita com swagger está disponível na rota /v1/documentation
