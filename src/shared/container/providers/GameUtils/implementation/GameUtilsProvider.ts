@@ -22,6 +22,10 @@ class GameUtilsProvider implements IGameUtilsProvider {
       .filter((splitLine: string) => splitLine !== '');
 
     const currentLineAction = lineSplitByBlankSpaceFiltered[1];
+    if (!currentLineAction) {
+      return '';
+    }
+
     return currentLineAction;
   }
 
